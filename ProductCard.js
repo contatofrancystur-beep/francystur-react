@@ -1,6 +1,6 @@
 import React from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faStar, faClock, faCartPlus, faUsers, faMapMarkerAlt } from "@fortawesome/free-solid-svg-icons";
+import { faStar, faClock, faCartPlus, faUsers, faMapMarkerAlt, faCalendarAlt } from "@fortawesome/free-solid-svg-icons";
 import { Link } from 'react-router-dom';
 import { useCart } from '../CartContext';
 
@@ -11,32 +11,17 @@ const ProductCard = ({ produto }) => {
     e.preventDefault();
     e.stopPropagation();
     
+    // Criar um item básico para o carrinho
     const itemCarrinho = {
       ...produto,
       quantidade: 1,
+      // Se o preço for objeto, usar o primeiro valor
       preco: typeof produto.preco === 'object' 
         ? Object.values(produto.preco)[0] 
         : produto.preco
     };
     
     adicionarAoCarrinho(itemCarrinho);
-  };
-
-  // Função para obter o texto do preço (versão simplificada)
-  const getTextoPreco = () => {
-    if (!produto.preco) return "R$ 0,00";
-    
-    if (typeof produto.preco === 'object') {
-      const valores = Object.values(produto.preco);
-      if (valores.length === 0) return "R$ 0,00";
-      
-      const valoresNumericos = valores.map(v => parseFloat(v) || 0);
-      const menorPreco = Math.min(...valoresNumericos);
-      return `A partir de R$ ${menorPreco.toFixed(2).replace('.', ',')}`;
-    }
-    
-    const precoNum = parseFloat(produto.preco);
-    return `R$ ${isNaN(precoNum) ? "0,00" : precoNum.toFixed(2).replace('.', ',')}`;
   };
 
   // Função para verificar se tem múltiplos preços
@@ -59,9 +44,21 @@ const ProductCard = ({ produto }) => {
     return categorias[produto.categoria] || produto.categoria;
   };
 
-  const textoPreco = getTextoPreco();
+  // Função para verificar se inclui Maria Fumaça
+  const incluiMariaFumaca = () => {
+    const produtosComMariaFumaca = [4, 6, 7, 8];
+    return produtosComMariaFumaca.includes(produto?.id);
+  };
+
+  // Função para obter os dias de disponibilidade
+  const getDiasDisponibilidade = () => {
+    if (incluiMariaFumaca()) {
+      return 'Quarta, Sexta, Sábado, Domingo';
+    }
+    return 'Todos os dias';
+  };
+
   const categoriaFormatada = getCategoriaFormatada();
-  const temMultiplos = temMultiplosPrecos();
 
   return (
     <Link to={`/produto/${produto.id}`} className="product-card-link">
@@ -69,15 +66,6 @@ const ProductCard = ({ produto }) => {
         <div className="product-image">
           <img src={produto.imagem} alt={produto.nome} loading="lazy" />
           <div className="product-badge">{categoriaFormatada}</div>
-          
-          {/* Mostrar badges apenas se houver informações relevantes */}
-          {temMultiplos && (
-            <div className="multi-price-badge">Várias opções</div>
-          )}
-          
-          {produto.faixaEtaria && (
-            <div className="age-badge">{produto.faixaEtaria.split(' ')[0]}</div>
-          )}
         </div>
         
         <div className="product-content">
@@ -87,36 +75,42 @@ const ProductCard = ({ produto }) => {
               <span>Gramado, RS</span>
             </div>
             
-            {/* Rating removido da home para simplificar */}
+            <div className="product-rating">
+              <FontAwesomeIcon icon={faStar} className="star-icon" />
+              <span>{produto.avaliacao || 4.8}</span>
+              <span className="review-count">({produto.reviews || 45})</span>
+            </div>
           </div>
           
           <h3 className="product-title">{produto.nome}</h3>
-          <p className="product-description">{produto.descricao}</p>
           
           <div className="product-details">
             <div className="product-duration">
               <FontAwesomeIcon icon={faClock} />
               <span>{produto.duracao}</span>
             </div>
-            
-            {produto.inclui && produto.inclui.length > 0 && (
-              <div className="product-includes">
-                <FontAwesomeIcon icon={faUsers} />
-                <span>{produto.inclui.length} itens</span>
-              </div>
-            )}
           </div>
           
-          {/* NÃO mostrar estas informações na home */}
-          {/* age-range e multi-price-notice foram removidas */}
+          {/* Dias de disponibilidade */}
+          <div className="product-days-availability">
+            <FontAwesomeIcon icon={faCalendarAlt} size="xs" />
+            <span>{getDiasDisponibilidade()}</span>
+          </div>
+          
+          {produto.faixaEtaria && (
+            <div className="age-range">
+              <span>{produto.faixaEtaria}</span>
+            </div>
+          )}
+          
+          {temMultiplosPrecos() && (
+            <div className="multi-price-notice">
+              <span>Várias opções disponíveis</span>
+            </div>
+          )}
           
           <div className="product-footer">
-            <div className="product-price">
-              <span className="price">{textoPreco}</span>
-              <span className="per-person">
-                {produto.categoria === 'transporte-passeios' ? 'por período' : 'por pessoa'}
-              </span>
-            </div>
+            {/* Preço removido e substituído por mensagem de consulta */}
             
             <button 
               className="add-to-cart-btn"
